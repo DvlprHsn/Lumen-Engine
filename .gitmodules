@@ -1,0 +1,6 @@
+[submodule "Lumen/vendor/spdlog"]
+	path = Lumen/vendor/spdlog
+	url = git@github.com:gabime/spdlog.git
+[submodule "Lumen/vendor/imgui"]
+	path = Lumen/vendor/imgui
+	url = git@github.com:ocornut/imgui.git
