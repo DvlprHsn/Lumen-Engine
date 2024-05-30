@@ -29,7 +29,7 @@ namespace Lumen
         ShutDown();
     }
 
-    Logger& Logger::GetInstance()
+    Logger& Logger::Instance()
     {
         static Logger instance;
         return instance;

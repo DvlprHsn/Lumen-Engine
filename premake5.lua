@@ -5,11 +5,20 @@ workspace "Lumen"
 
     outputdir = "%{cfg.buildcfg}/%{cfg.system}_%{cfg.architecture}"
 
+    IncludeDirs = {}
+    IncludeDirs["GLFW"] = "%{wks.location}/Lumen/vendor/glfw/include"
+    IncludeDirs["SPDLOG"] = "%{wks.location}/Lumen/vendor/spdlog/include"
+    IncludeDirs["GLAD"] = "%{wks.location}/Lumen/vendor/glad/include"
+
+    include "GLFW"
+    include "GLAD"
+
 project "Lumen"
     location "Lumen"
     kind "SharedLib"
     language "C++"
     cppdialect "C++17"
+    systemversion "latest"
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -25,20 +34,21 @@ project "Lumen"
     includedirs
     {
         "%{prj.name}/src",
-        "%{prj.name}/vendor/spdlog/include"
+        "%{IncludeDirs.SPDLOG}",
+        "%{IncludeDirs.GLFW}",
+        "%{IncludeDirs.GLAD}"
     }
 
-    vpaths {
-    ["Headers"] = { "**.h", "**.hpp" },
-    ["Sources/*"] = {"**.c", "**.cpp"},
-    ["Docs"] = "**.md"
-}
+    links 
+    {
+        "GLFW",
+        "GLAD"
+    }
 
-postbuildcommands
-{
-    { "{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox" }
-}
-
+    postbuildcommands
+    {
+        "{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox"
+    }
 
     filter { "system:windows", "architecture:x86" }
         defines
@@ -55,6 +65,32 @@ postbuildcommands
             "LUMEN_BUILD_DLL"
         }
 
+    filter { "system:macosx" }
+        defines
+        {
+            "LUMEN_PLATFORM_MACOS",
+            "LUMEN_BUILD_DLL"
+        }
+        systemversion "latest"
+        links
+        {
+            "Cocoa.framework",
+            "IOKit.framework",
+            "CoreFoundation.framework"
+        }
+
+    filter { "system:linux" }
+        defines
+        {
+            "LUMEN_PLATFORM_LINUX",
+            "LUMEN_BUILD_DLL"
+        }
+        links
+        {
+            "dl",
+            "pthread"
+        }
+
     filter "configurations:Debug"
         defines { "DEBUG" }
         symbols "On"
@@ -63,13 +99,12 @@ postbuildcommands
         defines { "NDEBUG" }
         optimize "On"
 
-
-
 project "Sandbox"
     location "Sandbox"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
+    systemversion "latest"
     targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
     objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -81,16 +116,13 @@ project "Sandbox"
 
     includedirs {
         "%{wks.location}/Lumen/src",
-        "%{wks.location}/Lumen/vendor/spdlog/include"
+        "%{wks.location}/%{IncludeDirs.SPDLOG}",
+        "%{wks.location}/%{IncludeDirs.GLFW}",
+        "%{wks.location}/%{IncludeDirs.GLAD}" 
     }
 
-    vpaths {
-    ["Headers"] = { "**.h", "**.hpp" },
-    ["Sources/*"] = {"**.c", "**.cpp"},
-    ["Docs"] = "**.md"
-}
-
-    links {
+    links 
+    {
         "Lumen"
     }
 
@@ -105,6 +137,20 @@ project "Sandbox"
             "LUMEN_PLATFORM_WIN64"
         }
 
+    filter {"system:macosx"}
+        defines {
+            "LUMEN_PLATFORM_MACOS"
+        }
+
+    filter {"system:linux"}
+        defines {
+            "LUMEN_PLATFORM_LINUX"
+        }
+
     filter "configurations:Debug"
         defines {"DEBUG"}
         symbols "On"
+
+    filter "configurations:Release or Distribute"
+        defines {"NDEBUG"}
+        optimize "On"
